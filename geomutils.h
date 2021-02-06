@@ -223,6 +223,32 @@ typedef std::shared_ptr<Obj> PObj;
 
 class Objects{
 public:
+    struct Iterator{
+        typedef Obj *PtrObj;
+        using iterator_category = std::forward_iterator_tag;
+        using diference_type = std::ptrdiff_t;
+        using value_type = PObj;
+        using pointer = PObj*;
+        using reference = PObj;
+
+        Iterator(pointer ptr): mPtr(ptr){}
+
+        reference operator*()const { return *mPtr; }
+        pointer operator->(){ return mPtr; }
+        Iterator& operator++() { mPtr++; return *this; }
+//        Iterator& operator++(int){ Iterator tmp = *this; ++(*this); return tmp; }
+
+        friend bool operator==(const Iterator &a, const Iterator &b){ return a.mPtr == b.mPtr; }
+        friend bool operator!=(const Iterator &a, const Iterator &b){ return a.mPtr != b.mPtr; }
+
+    private:
+        pointer mPtr;
+
+    };
+
+    Iterator begin() { return Iterator(&mObjs.front()); }
+    Iterator end()   { return Iterator(&mObjs.back()); }
+
     vectorvecf3 pos;
     vectorvecf2 tex;
     vectorvecf3 norm;

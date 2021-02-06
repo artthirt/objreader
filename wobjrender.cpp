@@ -44,8 +44,7 @@ void WObjRender::loadObjFile(const QString &fileName)
     if(reader.loadObject(fileName.toStdString(), &mObjs)){
         mObjs.recalc();
         printf("v:%d vt:%d vn:%d\n", mObjs.pos.size(), mObjs.tex.size(), mObjs.norm.size());
-        for(size_t i = 0; i < mObjs.count(); ++i){
-            GLObj* obj = mObjs.getGL(i);
+        for(auto obj : mObjs){
             printf("%s: fp:%d ft:%d fn:%d\n",
                    obj->name.c_str(), obj->posidx.size(), obj->texidx.size(), obj->normidx.size());
         }
@@ -105,7 +104,7 @@ void WObjRender::initializeGL()
 
     // d:\\downloads\\vvvv\\Camera_01.obj
     //mRender->loadObjFile("d:\\zaharov\\projects\\opengl\\Baby_Yoda.obj");
-    loadObjFile("d:\\downloads\\vvvv\\Baby_Yoda.obj");
+    loadObjFile("d:\\downloads\\vvvv\\Camera_01.obj");
 
 }
 
