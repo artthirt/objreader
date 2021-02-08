@@ -104,7 +104,8 @@ void WObjRender::initializeGL()
 
     // d:\\downloads\\vvvv\\Camera_01.obj
     //mRender->loadObjFile("d:\\zaharov\\projects\\opengl\\Baby_Yoda.obj");
-    loadObjFile("d:\\downloads\\vvvv\\Camera_01.obj");
+    //loadObjFile("d:\\downloads\\vvvv\\Camera_01.obj");
+    loadObjFile("d:\\zaharov\\projects\\opengl\\Baby_Yoda.obj");
 
 }
 

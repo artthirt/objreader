@@ -6,6 +6,7 @@
 
 typedef std::vector< std::string > ListString;
 typedef std::vector< std::vector<char> > ListVector;
+typedef std::vector<char*> ListPChar;
 typedef std::vector< int > ListInt;
 
 void split(const std::string& text, const std::string &ref, ListString& res)
@@ -35,6 +36,22 @@ void split(const char* text, const char *end, char ref, ListString& res)
     if(buf != prev){
         res.push_back(std::string(prev, buf - prev));
     }
+}
+
+void split(const char* text, const char *end, char ref, ListPChar& res)
+{
+    res.clear();
+    char *buf = const_cast<char*>(text);
+    char *prev = buf;
+    res.push_back(const_cast<char*>(text));
+    while(buf != end){
+        if(*buf == ref){
+            res.push_back(buf);
+            prev = buf;
+        }
+        buf++;
+    }
+    res.push_back(const_cast<char*>(end));
 }
 
 void split(const std::string& text, char ref, ListString& res)
@@ -67,26 +84,120 @@ void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel)
     }
 }
 
+template< typename T >
+void getVTN(const char *begin, const char* end, T &A, T &B, T&C)
+{
+    int res[64] = {0};
+
+    char* f = const_cast<char*>(begin);
+    char* prev = f;
+    int id = 0;
+    while(f != end){
+        if(*f == '/'){
+            res[id++] = std::atoi(prev);
+            prev = f + 1;
+        }
+        f++;
+    }
+    res[id++] = std::atoi(prev);
+    A = res[0];
+    B = res[1];
+    C = res[2];
+}
+
+bool getResO(const ListPChar& pc, const std::string& beg, std::string& res)
+{
+    if(pc.size() < 3)
+        return false;
+    int len = pc[1] - pc[0];
+    if(len != beg.size())
+        return false;
+    char* b0 = pc[0];
+    char* b1 = const_cast<char*>(beg.c_str());
+    while(b0 != pc[1]){
+        if(*b0 != *b1) return false;
+        b0++; b1++;
+    }
+
+    res = std::string(pc[1], pc[2] - pc[1]);
+    return true;
+}
+
+template< typename T>
+bool getRes(const ListPChar& pc, const std::string& beg, T& res)
+{
+    if(pc.size() < 2)
+        return false;
+    int len = pc[1] - pc[0];
+    if(len != beg.size())
+        return false;
+    char* b0 = pc[0];
+    char* b1 = const_cast<char*>(beg.c_str());
+    while(b0 != pc[1]){
+        if(*b0 != *b1) return false;
+        b0++; b1++;
+    }
+
+    for(size_t i = 1; i < pc.size() - 1; ++i){
+        res[i - 1] = std::atof(pc[i]);
+    }
+    return true;
+}
+
+template< typename T>
+bool getRes(const ListPChar& pc, const std::string& beg, T& res1, T& res2, T& res3)
+{
+    if(pc.size() < 2)
+        return false;
+    int len = pc[1] - pc[0];
+    if(len != beg.size())
+        return false;
+    char* b0 = pc[0];
+    char* b1 = const_cast<char*>(beg.c_str());
+    while(b0 != pc[1]){
+        if(*b0 != *b1) return false;
+        b0++; b1++;
+    }
+
+    int res[64] = {0};
+
+    char* f = const_cast<char*>(pc[1]);
+    char* end = const_cast<char*>(pc.back());
+    f++;
+    char* prev = f;
+    int id = 0;
+    while(f != end){
+        if(*f == '/' || *f == ' '){
+            res[id++] = std::atoi(prev);
+            prev = f + 1;
+        }
+        f++;
+    }
+    res[id++] = std::atoi(prev);
+    res1[0] = res[0];
+    res2[0] = res[1];
+    res3[0] = res[2];
+
+    res1[1] = res[3];
+    res2[1] = res[4];
+    res3[1] = res[5];
+
+    res1[2] = res[6];
+    res2[2] = res[7];
+    res3[2] = res[8];
+    return true;
+}
+
 std::tuple<Vec3u, Vec3u, Vec3u> getTriangle(const ListString& ls)
 {
     Vec3u res1, res2, res3;
     if(ls.size() < 4)
         return {res1, res2, res3};
-    ListString ls1;
-    split(ls[1], '/', ls1);
-    res1[0] = std::stol(ls1[0]);
-    if(!ls1[1].empty())  res2[0] = std::stol(ls1[1]);
-    if(!ls1[2].empty())  res3[0] = std::stol(ls1[2]);
 
-    split(ls[2], '/', ls1);
-    res1[1] = std::stol(ls1[0]);
-    if(!ls1[1].empty())  res2[1] = std::stol(ls1[1]);
-    if(!ls1[2].empty())  res3[1] = std::stol(ls1[2]);
+    getVTN(ls[1].c_str(), ls[1].c_str() + ls[1].length(), res1[0], res1[0], res1[0]);
+    getVTN(ls[2].c_str(), ls[2].c_str() + ls[2].length(), res1[1], res1[1], res1[1]);
+    getVTN(ls[3].c_str(), ls[3].c_str() + ls[3].length(), res1[2], res1[2], res1[2]);
 
-    split(ls[3], '/', ls1);
-    res1[2] = std::stol(ls1[0]);
-    if(!ls1[1].empty())  res2[2] = std::stol(ls1[1]);
-    if(!ls1[2].empty())  res3[2] = std::stol(ls1[2]);
     return {res1, res2, res3};
 }
 
@@ -112,7 +223,7 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
     file.close();
 
     std::vector<int> list;
-    ListString ls;
+    //ListString ls;
     vsplit(data, '\n', list);
 
     Obj* obj;
@@ -123,40 +234,48 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
 
     unsigned vid = 0, vtid = 0, vnid = 0;
 
+    ListPChar pc;
+    Vec3f v;
+    Vec2f vt;
+    Vec3u idx1, idx2, idx3;
+    std::string name;
+
+    const std::string so = "o";
+    const std::string sv = "v";
+    const std::string svt = "vt";
+    const std::string svn = "vn";
+    const std::string sf = "f";
+
+    objs->pos.reserve(1000000);
+    objs->tex.reserve(1000000);
+    objs->norm.reserve(1000000);
+
     for(size_t i = 0; i < list.size() - 1; ++i){
-        split(data.data() + list[i] + 1, data.data() + list[i + 1], ' ', ls);
-        if(!ls.empty()){
-            if(ls[0] == "o"){
+        split(data.data() + list[i] + 1, data.data() + list[i + 1], ' ', pc);
+        if(!pc.empty()){
+            if(getResO(pc, so, name)){
                 obj = objs->getInstance();
                 if(obj){
                     objs->push(obj);
                 }
-                obj->name = ls[1];
-                obj->clear();
+                obj->name = name;
+                obj->posidx.reserve(1000000);
+                obj->texidx.reserve(1000000);
+                obj->normidx.reserve(1000000);
             }
-            if(ls[0] == "v"){
-                x = std::stof(ls[1]);
-                y = std::stof(ls[2]);
-                z = std::stof(ls[3]);
-                objs->pos.push_back(Vec3f(x, y, z));
+            if(getRes(pc, sv, v)){
+                objs->pos.push_back(v);
                 vid++;
             }
-            if(ls[0] == "vt"){
-                x = std::stof(ls[1]);
-                y = std::stof(ls[2]);
-                objs->tex.push_back(Vec2f(x, y));
+            if(getRes(pc, svt, vt)){
+                objs->tex.push_back(vt);
                 vtid++;
             }
-            if(ls[0] == "vn"){
-                x = std::stof(ls[1]);
-                y = std::stof(ls[2]);
-                z = std::stof(ls[3]);
-                objs->norm.push_back(Vec3f(x, y, z));
+            if(getRes(pc, svn, v)){
+                objs->norm.push_back(v);
                 vnid++;
             }
-            if(ls[0] == "f"){
-                Vec3u idx1, idx2, idx3;
-                std::tie<Vec3u>(idx1, idx2, idx3) = getTriangle(ls);
+            if(getRes(pc, sf, idx1, idx2, idx3)){
                 idx1 -= 1;
                 obj->posidx.push_back(idx1[0]); obj->posidx.push_back(idx1[1]); obj->posidx.push_back(idx1[2]);
 
