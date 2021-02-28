@@ -35,24 +35,31 @@ WObjRender::WObjRender(QWidget *parent)
 
 WObjRender::~WObjRender()
 {
+    if(mTask.valid())
+        mTask.wait();
+}
+
+double WObjRender::progress() const
+{
+    return mProgress;
 }
 
 void WObjRender::loadObjFile(const QString &fileName)
 {
-    ObjReader reader;
 
-    if(reader.loadObject(fileName.toStdString(), &mObjs)){
-        mObjs.recalc();
-        printf("v:%d vt:%d vn:%d\n", mObjs.pos.size(), mObjs.tex.size(), mObjs.norm.size());
-        for(auto obj : mObjs){
-            printf("%s: fp:%d ft:%d fn:%d\n",
-                   obj->name.c_str(), obj->posidx.size(), obj->texidx.size(), obj->normidx.size());
-        }
-        mObjs.initBufferData();
-        mIsUpdate = true;
-    }else{
+    mObjs.clearBufferData();
 
-    }
+    auto fn1 = [=](double val){
+        mProgress = val;
+    };
+
+    auto fn = [=](){
+        ObjReader reader;
+        reader.setCallProgress(fn1);
+        callMainThread(reader.loadObject(fileName.toStdString(), &mObjs));
+    };
+
+    mTask = std::async(std::launch::async, fn);
 }
 
 void WObjRender::setViewport(float w, float h)
@@ -70,6 +77,28 @@ void WObjRender::initBufferObject()
 void WObjRender::clearBufferObject()
 {
 
+}
+
+void WObjRender::reloadObj()
+{
+    mObjs.recalc();
+    printf("v:%d vt:%d vn:%d\n", mObjs.pos.size(), mObjs.tex.size(), mObjs.norm.size());
+    for(auto obj : mObjs){
+        printf("%s: fp:%d ft:%d fn:%d\n",
+               obj->name.c_str(), obj->posidx.size(), obj->texidx.size(), obj->normidx.size());
+    }
+    mObjs.initBufferData();
+    mProgress = 1;
+    mIsUpdate = true;
+}
+
+void WObjRender::callMainThread(bool ok)
+{
+    QTimer::singleShot(0, this, [=](){
+        if(ok){
+            reloadObj();
+        }
+    });
 }
 
 
@@ -104,7 +133,7 @@ void WObjRender::initializeGL()
 
     // d:\\downloads\\vvvv\\Camera_01.obj
     //mRender->loadObjFile("d:\\zaharov\\projects\\opengl\\Baby_Yoda.obj");
-    loadObjFile("d:\\downloads\\vvvv\\Camera_01.obj");
+    //loadObjFile("d:\\downloads\\vvvv\\Baby_Yoda.obj");
 
 }
 
@@ -207,7 +236,7 @@ void WObjRender::mouseMoveEvent(QMouseEvent *event)
 
 void WObjRender::wheelEvent(QWheelEvent *event)
 {
-    mScale += 0.01 * event->delta();
+    mScale += 0.002 * event->delta();
     if(mScale < 0.1)
         mScale = 0.1;
     mIsUpdate = true;

@@ -8,6 +8,8 @@
 #include <QMatrix4x4>
 #include <QTimer>
 
+#include <future>
+
 #include "geomutils.h"
 #include "glutils.h"
 
@@ -17,6 +19,8 @@ class WObjRender : public QOpenGLWidget, private OpenGLFunctions
 public:
     explicit WObjRender(QWidget *parent = nullptr);
     ~WObjRender() override;
+
+    double progress() const;
 
     void loadObjFile(const QString& fileName);
 
@@ -29,6 +33,7 @@ private:
     float mLightColor[4];
     float mAmbient[4];
     float mLightPos[4];
+    double mProgress = 0;
 
     QTimer mTimer;
 
@@ -59,10 +64,15 @@ private:
 
     float mScale = 1;
 
+    std::future<void> mTask;
+
     void setViewport(float w, float h);
 
     void initBufferObject();
     void clearBufferObject();
+
+    void reloadObj();
+    void callMainThread(bool ok);
 
     // QOpenGLWidget interface
 protected:

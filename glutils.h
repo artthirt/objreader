@@ -40,6 +40,7 @@ private:
     uint mVecBuf = 0;
     uint mVtBuf = 0;
     uint mVnBuf = 0;
+    bool mInitObj = false;
 };
 
 #endif // GLUTILS_H

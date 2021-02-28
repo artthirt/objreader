@@ -3,10 +3,13 @@
 #include <fstream>
 #include <sstream>
 #include <tuple>
+#include <functional>
 
 typedef std::vector< std::string > ListString;
 typedef std::vector< std::vector<char> > ListVector;
 typedef std::vector< int > ListInt;
+
+typedef std::function<void(double)> signal_progress;
 
 void split(const std::string& text, const std::string &ref, ListString& res)
 {
@@ -49,7 +52,7 @@ void split(const std::string& text, char ref, ListString& res)
     res.push_back(text.substr(prev));
 }
 
-void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel)
+void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel, signal_progress fun = nullptr)
 {
     posdel.clear();
 
@@ -59,6 +62,7 @@ void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel)
             posdel.push_back(i);
         }
         if((i % 50000) == 0){
+            if(fun) fun(1. * i / text.size());
             std::cout << "1 progress " << 1. * i / text.size() << "          \r";
         }
     }
@@ -113,7 +117,8 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
 
     std::vector<int> list;
     ListString ls;
-    vsplit(data, '\n', list);
+    auto fn = std::bind(&ObjReader::set_progress, this, std::placeholders::_1);
+    vsplit(data, '\n', list, fn);
 
     Obj* obj;
     float x, y, z;
@@ -171,9 +176,22 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
             }
         }
         if((id % 5000) == 0){
+            mProgress = 1. * id / list.size();
+            if(mCallProgress)  mCallProgress(mProgress);
             std::cout << "2 progress " << 1. * id / list.size() << "          \r";
         }
         id++;
     }
     return !objs->empty();
+}
+
+void ObjReader::setCallProgress(ObjReader::call_progress fun)
+{
+    mCallProgress = fun;
+}
+
+void ObjReader::set_progress(double v)
+{
+    mProgress = v;
+    if(mCallProgress)  mCallProgress(mProgress);
 }

@@ -82,6 +82,7 @@ void GLObjects::recalc()
 
 void GLObjects::initBufferData()
 {
+    clearBufferData();
     if(pos.size()){
         mSelf->glGenBuffers(1, &mVecBuf);
         mSelf->glBindBuffer(GL_ARRAY_BUFFER, mVecBuf);
@@ -101,10 +102,13 @@ void GLObjects::initBufferData()
         mSelf->glBufferData(GL_ARRAY_BUFFER, norm.size() * sizeof(Vec3f), norm.data(), GL_STATIC_DRAW);
         //SHOWGLERROR();
     }
+    mInitObj = true;
 }
 
 void GLObjects::clearBufferData()
 {
+    mInitObj = false;
+
     if(mVecBuf){
         mSelf->glDeleteBuffers(1, &mVecBuf);
         mVecBuf = 0;
@@ -121,6 +125,8 @@ void GLObjects::clearBufferData()
 
 void GLObjects::drawBufferData(Obj *obj, int v, int vn)
 {
+    if(!mInitObj)
+        return;
     mSelf->glBindBuffer(GL_ARRAY_BUFFER, mVecBuf);
     mSelf->glEnableVertexAttribArray(v);
     mSelf->glVertexAttribPointer(v, 3, GL_FLOAT, false, sizeof(Vec3f), nullptr);
