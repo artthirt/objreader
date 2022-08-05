@@ -60,7 +60,12 @@ private:
 
     Vec2f mOffR;
     Vec2f mMouseR;
+    float mOffZ = -10;
     bool mMouseDownR = false;
+
+    Vec2f mOffW;
+    Vec2f mMouseW;
+    bool mMouseDownW = false;
 
     float mScale = 1;
 

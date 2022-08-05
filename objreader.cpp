@@ -5,6 +5,8 @@
 #include <tuple>
 #include <functional>
 
+using namespace std;
+
 typedef std::vector< std::string > ListString;
 typedef std::vector< std::vector<char> > ListVector;
 typedef std::vector<char*> ListPChar;
@@ -14,7 +16,7 @@ typedef std::function<void(double)> signal_progress;
 
 void split(const std::string& text, const std::string &ref, ListString& res)
 {
-    res.clear();
+    res.resize(0);
     size_t pos = 0, prev = 0;
     while((pos = text.find(ref, prev)) != text.npos){
         res.push_back(text.substr(prev, pos - prev));
@@ -26,7 +28,7 @@ void split(const std::string& text, const std::string &ref, ListString& res)
 
 void split(const char* text, const char *end, char ref, ListString& res)
 {
-    res.clear();
+    res.resize(0);
     char *buf = (char*)text;
     char *prev = buf;
     while(buf != end){
@@ -43,7 +45,7 @@ void split(const char* text, const char *end, char ref, ListString& res)
 
 void split(const char* text, const char *end, char ref, ListPChar& res)
 {
-    res.clear();
+    res.resize(0);
     char *buf = const_cast<char*>(text);
     char *prev = buf;
     res.push_back(const_cast<char*>(text));
@@ -59,7 +61,7 @@ void split(const char* text, const char *end, char ref, ListPChar& res)
 
 void split(const std::string& text, char ref, ListString& res)
 {
-    res.clear();
+    res.resize(0);
     size_t pos = 0, prev = 0;
     while((pos = text.find(ref, prev)) != text.npos){
         res.push_back(text.substr(prev, pos - prev));
@@ -71,7 +73,7 @@ void split(const std::string& text, char ref, ListString& res)
 
 void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel, signal_progress fun = nullptr)
 {
-    posdel.clear();
+    posdel.resize(0);
 
     posdel.push_back(-1);
     for(size_t i = 0; i < text.size(); ++i){
@@ -163,7 +165,7 @@ bool getRes(const ListPChar& pc, const std::string& beg, T& res1, T& res2, T& re
         b0++; b1++;
     }
 
-    int res[64] = {0};
+    int res[512] = {0};
 
     char* f = const_cast<char*>(pc[1]);
     char* end = const_cast<char*>(pc.back());
@@ -189,6 +191,97 @@ bool getRes(const ListPChar& pc, const std::string& beg, T& res1, T& res2, T& re
     res1[2] = res[6];
     res2[2] = res[7];
     res3[2] = res[8];
+    return true;
+}
+
+template< typename T>
+void Fn(vector<T>& res1, vector<int> res[10], int i)
+{
+    if(res[i].size() == 4){
+        res1.push_back(res[i][0]);
+        res1.push_back(res[i][1]);
+        res1.push_back(res[i][2]);
+
+        res1.push_back(res[i][2]);
+        res1.push_back(res[i][3]);
+        res1.push_back(res[i][0]);
+    }else{
+        printf("count pnt %d", res[i].size());
+    }
+};
+
+template< typename T>
+bool getRes(const ListPChar& pc, const std::string& beg, vector<T>& res1, vector<T>& res2, vector<T>& res3)
+{
+    if(pc.size() < 2)
+        return false;
+    int len = pc[1] - pc[0];
+    if(len != beg.size())
+        return false;
+    char* b0 = pc[0];
+    char* b1 = const_cast<char*>(beg.c_str());
+    while(b0 != pc[1]){
+        if(*b0 != *b1) return false;
+        b0++; b1++;
+    }
+
+    //int res[512] = {0};
+    vector<int> res[10];
+
+    char* f = const_cast<char*>(pc[1]);
+    char* end = const_cast<char*>(pc.back());
+    f++;
+    string s(f, end - f);
+    ListString r, r0;
+    split(s, ' ', r);
+    for(int i = 0; i < r.size(); ++i){
+        split(r[i], '/', r0);
+        if(r0.size()){
+            for(int j = 0; j < r0.size(); ++j){
+                string& s1 = r0[j];
+                if(!s1.empty())
+                    res[j].push_back(stoi(s1) - 1);
+            }
+        }else{
+            res[0].push_back(stoi(r[i]) - 1);
+        }
+    }
+    if(res[0].size() == 3){
+        for(int i = 0; i < res[0].size(); ++i){
+            res1.push_back(res[0][i]);
+        }
+        for(int i = 0; i < res[1].size(); ++i){
+            res2.push_back(res[1][i]);
+        }
+        for(int i = 0; i < res[2].size(); ++i){
+            res3.push_back(res[2][i]);
+        }
+    }else{
+        Fn(res1, res, 0);
+        Fn(res2, res, 1);
+        Fn(res3, res, 2);
+    }
+//    char* prev = f;
+//    int id = 0;
+//    while(f != end){
+//        if(*f == '/' || *f == ' '){
+//            res[id++] = std::atoi(prev);
+//            prev = f + 1;
+//        }
+//        f++;
+//    }
+//    res[id++] = std::atoi(prev);
+//    res1[0] = res[0];
+//    res2[0] = res[1];
+//    res3[0] = res[2];
+
+//    res1[1] = res[3];
+//    res2[1] = res[4];
+//    res3[1] = res[5];
+
+//    res1[2] = res[6];
+//    res2[2] = res[7];
+//    res3[2] = res[8];
     return true;
 }
 
@@ -280,18 +373,18 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
                 objs->norm.push_back(v);
                 vnid++;
             }
-            if(getRes(pc, sf, idx1, idx2, idx3)){
-                idx1 -= 1;
-                obj->posidx.push_back(idx1[0]); obj->posidx.push_back(idx1[1]); obj->posidx.push_back(idx1[2]);
+            if(getRes(pc, sf, obj->posidx, obj->texidx, obj->normidx)){
+//                idx1 -= 1;
+//                obj->posidx.push_back(idx1[0]); obj->posidx.push_back(idx1[1]); obj->posidx.push_back(idx1[2]);
 
-                if(!idx2.isNull()){
-                    idx2 -= 1;
-                    obj->texidx.push_back(idx2[0]); obj->texidx.push_back(idx2[1]); obj->texidx.push_back(idx2[2]);
-                }
-                if(!idx3.isNull()){
-                    idx3 -= 1;
-                    obj->normidx.push_back(idx3[0]); obj->normidx.push_back(idx3[1]); obj->normidx.push_back(idx3[2]);
-                }
+//                if(!idx2.isNull()){
+//                    idx2 -= 1;
+//                    obj->texidx.push_back(idx2[0]); obj->texidx.push_back(idx2[1]); obj->texidx.push_back(idx2[2]);
+//                }
+//                if(!idx3.isNull()){
+//                    idx3 -= 1;
+//                    obj->normidx.push_back(idx3[0]); obj->normidx.push_back(idx3[1]); obj->normidx.push_back(idx3[2]);
+//                }
             }
         }
         if((id % 5000) == 0){

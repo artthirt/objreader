@@ -46,8 +46,8 @@ double WObjRender::progress() const
 
 void WObjRender::loadObjFile(const QString &fileName)
 {
-
     mObjs.clearBufferData();
+    mObjs.clear();
 
     auto fn1 = [=](double val){
         mProgress = val;
@@ -152,7 +152,7 @@ void WObjRender::paintGL()
     setViewport(width(), height());
 
     mModel.setToIdentity();
-    mModel.translate(mOffR[0], -mOffR[1], -200);
+    mModel.translate(mOffR[0], -mOffR[1], mOffZ);
 
     mModel.rotate(mRot[0], 0, 1, 0);
     mModel.rotate(mRot[1], 1, 0, 0);
@@ -165,7 +165,7 @@ void WObjRender::paintGL()
 
     mMvp = mProj * mModel;
 
-    float pos[3] = {mOffR[0], mOffR[1], -200};
+    float pos[3] = {mOffR[0], mOffR[1], mOffZ};
 
     glUniformMatrix4fv(mMvpAttr, 1, false, mMvp.constData());
     glUniformMatrix3fv(mModelAttr, 1, false, model.constData());
@@ -197,7 +197,13 @@ void WObjRender::mousePressEvent(QMouseEvent *event)
         mMouseDownR = true;
         mMouseR = Vec2f(event->pos().x(), event->pos().y());
         mIsUpdate = true;
-    }}
+    }
+    if(event->buttons().testFlag(Qt::MiddleButton)){
+        mMouseDownW = true;
+        mMouseW = Vec2f(event->pos().x(), event->pos().y());
+        mIsUpdate = true;
+    }
+}
 
 void WObjRender::mouseReleaseEvent(QMouseEvent *event)
 {
@@ -207,6 +213,9 @@ void WObjRender::mouseReleaseEvent(QMouseEvent *event)
 
     mMouseDownR = false;
     mMouseR = Vec2f(event->pos().x(), event->pos().y());
+
+    mMouseDownW = false;
+    mMouseW = Vec2f(event->pos().x(), event->pos().y());
 
     mIsUpdate = true;
 }
@@ -232,12 +241,23 @@ void WObjRender::mouseMoveEvent(QMouseEvent *event)
 
         mIsUpdate = true;
     }
+    if(mMouseDownW){
+        Vec2f mouse(event->pos().x(), event->pos().y());
+        Vec2f dlt = mouse - mMouseW;
+        mMouseW = mouse;
+
+        mOffW += dlt * 0.25f;
+        mScale += mOffW[1] * 0.1;
+        if(mScale < 0.01) mScale = 0.1;
+
+        mIsUpdate = true;
+    }
 }
 
 void WObjRender::wheelEvent(QWheelEvent *event)
 {
-    mScale += 0.002 * event->delta();
-    if(mScale < 0.1)
-        mScale = 0.1;
+    mOffZ += 0.005 * event->delta();
+    if(mOffZ > 0)
+        mOffZ = 0;
     mIsUpdate = true;
 }

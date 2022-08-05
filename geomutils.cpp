@@ -55,8 +55,16 @@ void Objects::push(Obj *obj)
     mObjs.push_back(o);
 }
 
-Obj *Objects::get(size_t index) const
+Obj *Objects::get(size_t index)
 {
     return mObjs[index].get();
+}
+
+void Objects::clear()
+{
+    mObjs.clear();
+    pos.clear();
+    tex.clear();
+    norm.clear();
 }
 

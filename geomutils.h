@@ -260,7 +260,8 @@ public:
     size_t count() const;
     bool empty() const;
     void push(Obj* obj);
-    Obj *get(size_t index) const;
+    Obj *get(size_t index);
+    void clear();
 
 protected:
     std::vector<PObj> mObjs;
