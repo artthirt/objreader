@@ -222,7 +222,7 @@ private:
     uint32_t mType;
 };
 
-#if _MSC_VER <= 1600
+#if defined(_MSC_VER) && _MSC_VER <= 1600
 typedef std::tr1::shared_ptr<Obj> PObj;
 #define nullptr NULL
 #else

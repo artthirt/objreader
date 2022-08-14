@@ -17,11 +17,10 @@ typedef std::vector< std::vector<char> > ListVector;
 typedef std::vector<char*> ListPChar;
 typedef std::vector< int > ListInt;
 
-#if _MSC_VER > 1600
+#if defined(_MSC_VER) && _MSC_VER <= 1600
 typedef std::function<void(double)> signal_progress;
 #else
 typedef void(*signal_progress(double));
-#define tuple std::tr1::tuple
 #endif
 
 inline void split(const std::string& text, const std::string &ref, ListString& res)
@@ -511,6 +510,27 @@ bool ObjReader::loadFromBuffer(const std::vector<char> &data, Objects *objs)
     return !objs->empty();
 }
 
+
+#ifdef __GNUC__
+#  include <features.h>
+#  if __GNUC_PREREQ(4,0)
+//      If  gcc_version >= 4.0
+void ObjReader::setCallProgress(ObjReader::call_progress fun)
+{
+    mCallProgress = fun;
+}
+
+void ObjReader::set_progress(double v)
+{
+    mProgress = v;
+    if(mCallProgress)  mCallProgress(mProgress);
+}
+#  elif __GNUC_PREREQ(3,2)
+//       If gcc_version >= 3.2
+#  else
+//       Else
+#  endif
+#else
 #if _MSC_VER > 1600
 void ObjReader::setCallProgress(ObjReader::call_progress fun)
 {
@@ -522,4 +542,5 @@ void ObjReader::set_progress(double v)
     mProgress = v;
     if(mCallProgress)  mCallProgress(mProgress);
 }
+#endif
 #endif

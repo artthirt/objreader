@@ -22,15 +22,32 @@ public:
 
     bool loadFromBuffer(const std::vector<char> &data, Objects *objs);
 
-#if _MSC_VER > 1600
+#ifdef __GNUC__
+#  include <features.h>
+#  if __GNUC_PREREQ(4,0)
+//      If  gcc_version >= 4.0
     typedef std::function<void(double)> call_progress;
     void setCallProgress(call_progress fun);
+#  endif
+#else
+#if defined(_MSC_VER) && _MSC_VER > 1600
+    typedef std::function<void(double)> call_progress;
+    void setCallProgress(call_progress fun);
+#endif
 #endif
 
 private:
     double mProgress;
+#ifdef __GNUC__
+#  include <features.h>
+#  if __GNUC_PREREQ(4,0)
+//      If  gcc_version >= 4.0
+    call_progress mCallProgress;
+#endif
+#else
 #if _MSC_VER > 1600
     call_progress mCallProgress;
+#endif
 #endif
     void set_progress(double v);
 };
