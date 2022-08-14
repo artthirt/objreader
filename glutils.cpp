@@ -55,14 +55,14 @@ void GLObjects::recalc()
             newpos.push_back(pos[A[1]]);
             newpos.push_back(pos[A[2]]);
 
-            if(obj->texidx.size()){
+            if(obj->texidx.size() && tex.size()){
                 unsigned *B = &obj->texidx[i];
                 newtex.push_back(tex[B[0]]);
                 newtex.push_back(tex[B[1]]);
                 newtex.push_back(tex[B[2]]);
             }
 
-            if(obj->normidx.size()){
+            if(obj->normidx.size() && norm.size()){
                 unsigned *C = &obj->normidx[i];
                 newnorm.push_back(norm[C[0]]);
                 newnorm.push_back(norm[C[1]]);
@@ -75,9 +75,12 @@ void GLObjects::recalc()
         obj->posidx = newposidx;
 
     }
-    pos = newpos;
-    tex = newtex;
-    norm = newnorm;
+    if(!newpos.empty())
+        pos = newpos;
+    if(!newtex.empty())
+        tex = newtex;
+    if(!newnorm.empty())
+        norm = newnorm;
 }
 
 void GLObjects::initBufferData()

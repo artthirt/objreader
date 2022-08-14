@@ -85,7 +85,7 @@ void WObjRender::reloadObj()
     printf("v:%d vt:%d vn:%d\n", mObjs.pos.size(), mObjs.tex.size(), mObjs.norm.size());
     for(auto obj : mObjs){
         printf("%s: fp:%d ft:%d fn:%d\n",
-               obj->name.c_str(), obj->posidx.size(), obj->texidx.size(), obj->normidx.size());
+               obj->name.toLatin1().data(), obj->posidx.size(), obj->texidx.size(), obj->normidx.size());
     }
     mObjs.initBufferData();
     mProgress = 1;

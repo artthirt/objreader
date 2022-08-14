@@ -4,6 +4,11 @@
 #include <sstream>
 #include <tuple>
 #include <functional>
+#include <map>
+//#include <hash_map>
+
+#include <QHash>
+#include <QStringList>
 
 using namespace std;
 
@@ -12,9 +17,14 @@ typedef std::vector< std::vector<char> > ListVector;
 typedef std::vector<char*> ListPChar;
 typedef std::vector< int > ListInt;
 
+#if _MSC_VER > 1600
 typedef std::function<void(double)> signal_progress;
+#else
+typedef void(*signal_progress(double));
+#define tuple std::tr1::tuple
+#endif
 
-void split(const std::string& text, const std::string &ref, ListString& res)
+inline void split(const std::string& text, const std::string &ref, ListString& res)
 {
     res.resize(0);
     size_t pos = 0, prev = 0;
@@ -26,7 +36,7 @@ void split(const std::string& text, const std::string &ref, ListString& res)
     res.push_back(text.substr(prev));
 }
 
-void split(const char* text, const char *end, char ref, ListString& res)
+inline void split(const char* text, const char *end, char ref, ListString& res)
 {
     res.resize(0);
     char *buf = (char*)text;
@@ -43,7 +53,7 @@ void split(const char* text, const char *end, char ref, ListString& res)
     }
 }
 
-void split(const char* text, const char *end, char ref, ListPChar& res)
+inline void split(const char* text, const char *end, char ref, ListPChar& res)
 {
     res.resize(0);
     char *buf = const_cast<char*>(text);
@@ -59,7 +69,17 @@ void split(const char* text, const char *end, char ref, ListPChar& res)
     res.push_back(const_cast<char*>(end));
 }
 
-void split(const std::string& text, char ref, ListString& res)
+//void split(const char* text, const char *end, char ref, ListString& res)
+//{
+//    res.resize(0);
+//    QString qs = QString::fromAscii(text, (int)(end - text));
+//    QStringList sl = qs.split(QChar(ref));
+//    for(int i = 0; i < sl.size(); ++i){
+//        res.push_back(sl[i].toStdString());
+//    }
+//}
+
+inline void split(const std::string& text, char ref, ListString& res)
 {
     res.resize(0);
     size_t pos = 0, prev = 0;
@@ -71,7 +91,7 @@ void split(const std::string& text, char ref, ListString& res)
     res.push_back(text.substr(prev));
 }
 
-void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel, signal_progress fun = nullptr)
+inline void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel, signal_progress fun = nullptr)
 {
     posdel.resize(0);
 
@@ -91,7 +111,7 @@ void vsplit(const std::vector<char>& text, char ref, std::vector<int> &posdel, s
 }
 
 template< typename T >
-void getVTN(const char *begin, const char* end, T &A, T &B, T&C)
+inline void getVTN(const char *begin, const char* end, T &A, T &B, T&C)
 {
     int res[64] = {0};
 
@@ -111,39 +131,25 @@ void getVTN(const char *begin, const char* end, T &A, T &B, T&C)
     C = res[2];
 }
 
-bool getResO(const ListPChar& pc, const std::string& beg, std::string& res)
+inline bool getResO(const ListPChar& pc, std::string& res)
 {
     if(pc.size() < 3)
         return false;
-    int len = pc[1] - pc[0];
-    if(len != beg.size())
-        return false;
-    char* b0 = pc[0];
-    char* b1 = const_cast<char*>(beg.c_str());
-    while(b0 != pc[1]){
-        if(*b0 != *b1) return false;
-        b0++; b1++;
-    }
-
     res = std::string(pc[1], pc[2] - pc[1]);
     return true;
 }
 
-template< typename T>
-bool getRes(const ListPChar& pc, const std::string& beg, T& res)
+inline bool getResO(const QStringList& pc, QString& res)
 {
     if(pc.size() < 2)
         return false;
-    int len = pc[1] - pc[0];
-    if(len != beg.size())
-        return false;
-    char* b0 = pc[0];
-    char* b1 = const_cast<char*>(beg.c_str());
-    while(b0 != pc[1]){
-        if(*b0 != *b1) return false;
-        b0++; b1++;
-    }
+    res = pc[1];
+    return true;
+}
 
+template< typename T>
+inline bool getRes(const ListPChar& pc, T& res)
+{
     for(size_t i = 1; i < pc.size() - 1; ++i){
         res[i - 1] = std::atof(pc[i]);
     }
@@ -151,21 +157,34 @@ bool getRes(const ListPChar& pc, const std::string& beg, T& res)
 }
 
 template< typename T>
-bool getRes(const ListPChar& pc, const std::string& beg, T& res1, T& res2, T& res3)
+inline bool getRes(const QStringList& pc, T& res)
 {
-    if(pc.size() < 2)
-        return false;
-    int len = pc[1] - pc[0];
-    if(len != beg.size())
-        return false;
-    char* b0 = pc[0];
-    char* b1 = const_cast<char*>(beg.c_str());
-    while(b0 != pc[1]){
-        if(*b0 != *b1) return false;
-        b0++; b1++;
+    for(size_t i = 1; i < pc.size(); ++i){
+        res[i - 1] = pc[i].toFloat();
     }
+    return true;
+}
 
-    int res[512] = {0};
+inline bool getRes(const ListPChar& pc, Vec3f& res)
+{
+    res[0] = std::atof(pc[1]);
+    res[1] = std::atof(pc[2]);
+    res[2] = std::atof(pc[3]);
+    return true;
+}
+
+inline bool getRes(const QStringList& pc, Vec3f& res)
+{
+    res[0] = pc[1].toFloat();
+    res[1] = pc[2].toFloat();
+    res[2] = pc[3].toFloat();
+    return true;
+}
+
+template< typename T>
+inline bool getRes(const ListPChar& pc, T& res1, T& res2, T& res3)
+{
+    int res[96] = {0};
 
     char* f = const_cast<char*>(pc[1]);
     char* end = const_cast<char*>(pc.back());
@@ -195,7 +214,7 @@ bool getRes(const ListPChar& pc, const std::string& beg, T& res1, T& res2, T& re
 }
 
 template< typename T>
-void Fn(vector<T>& res1, vector<int> res[10], int i)
+inline void Fn(vector<T>& res1, const vector<int> res[10], int i)
 {
     if(res[i].size() == 4){
         res1.push_back(res[i][0]);
@@ -208,23 +227,11 @@ void Fn(vector<T>& res1, vector<int> res[10], int i)
     }else{
         printf("count pnt %d", res[i].size());
     }
-};
+}
 
 template< typename T>
-bool getRes(const ListPChar& pc, const std::string& beg, vector<T>& res1, vector<T>& res2, vector<T>& res3)
+inline bool getRes(const ListPChar& pc, vector<T>& res1, vector<T>& res2, vector<T>& res3)
 {
-    if(pc.size() < 2)
-        return false;
-    int len = pc[1] - pc[0];
-    if(len != beg.size())
-        return false;
-    char* b0 = pc[0];
-    char* b1 = const_cast<char*>(beg.c_str());
-    while(b0 != pc[1]){
-        if(*b0 != *b1) return false;
-        b0++; b1++;
-    }
-
     //int res[512] = {0};
     vector<int> res[10];
 
@@ -240,13 +247,15 @@ bool getRes(const ListPChar& pc, const std::string& beg, vector<T>& res1, vector
             for(int j = 0; j < r0.size(); ++j){
                 string& s1 = r0[j];
                 if(!s1.empty())
-                    res[j].push_back(stoi(s1) - 1);
+                    res[j].push_back(std::atoi(s1.c_str()) - 1);
             }
         }else{
-            res[0].push_back(stoi(r[i]) - 1);
+            res[0].push_back(std::atoi(r[i].c_str()) - 1);
         }
     }
     if(res[0].size() == 3){
+        int r = res[0].size();
+        int r1 = res1.size();
         for(int i = 0; i < res[0].size(); ++i){
             res1.push_back(res[0][i]);
         }
@@ -285,17 +294,59 @@ bool getRes(const ListPChar& pc, const std::string& beg, vector<T>& res1, vector
     return true;
 }
 
-std::tuple<Vec3u, Vec3u, Vec3u> getTriangle(const ListString& ls)
+template< typename T>
+inline bool getRes(const QStringList& pc, vector<T>& res1, vector<T>& res2, vector<T>& res3)
+{
+    //int res[512] = {0};
+    vector<int> res[10];
+    QStringList sl;
+
+    if(pc.size() == 3 + 1){
+        for(int i = 1; i < pc.size(); ++i){
+            sl = pc[i].split('/');
+            if(sl.size() == 0){
+                res1.push_back(pc[i].toUInt() -1 );
+            }else{
+                if(sl.size() == 3){
+                    if(!sl[0].isEmpty())res1.push_back(sl[0].toUInt() - 1);
+                    if(!sl[1].isEmpty())res2.push_back(sl[1].toUInt() - 1);
+                    if(!sl[2].isEmpty())res3.push_back(sl[2].toUInt() - 1);
+                }
+            }
+        }
+    }else{
+        if(pc.size() == 4 + 1){
+            for(int i = 1; i < pc.size(); ++i){
+                sl = pc[i].split('/');
+                if(sl.size() == 0){
+                    res[0].push_back(pc[i].toFloat() - 1);
+                }else{
+                    if(sl.size() == 3){
+                        if(!sl[0].isEmpty())res[0].push_back(sl[0].toUInt() - 1);
+                        if(!sl[0].isEmpty())res[1].push_back(sl[1].toUInt() - 1);
+                        if(!sl[0].isEmpty())res[2].push_back(sl[2].toUInt() - 1);
+                    }
+                }
+            }
+            Fn(res1, res, 0);
+            Fn(res2, res, 1);
+            Fn(res3, res, 2);
+        }
+    }
+    return true;
+}
+
+inline tuple<Vec3u, Vec3u, Vec3u> getTriangle(const ListString& ls)
 {
     Vec3u res1, res2, res3;
     if(ls.size() < 4)
-        return {res1, res2, res3};
+        return tuple<Vec3u, Vec3u, Vec3u>(res1, res2, res3);
 
     getVTN(ls[1].c_str(), ls[1].c_str() + ls[1].length(), res1[0], res1[0], res1[0]);
     getVTN(ls[2].c_str(), ls[2].c_str() + ls[2].length(), res1[1], res1[1], res1[1]);
     getVTN(ls[3].c_str(), ls[3].c_str() + ls[3].length(), res1[2], res1[2], res1[2]);
 
-    return {res1, res2, res3};
+    return tuple<Vec3u, Vec3u, Vec3u>(res1, res2, res3);
 }
 
 //////////////////////////////
@@ -307,7 +358,7 @@ ObjReader::ObjReader()
 
 bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
 {
-    std::fstream file(fileName, std::ios_base::in | std::ios_base::binary);
+    std::fstream file(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
     if(!file.is_open() || !objs)
         return false;
 
@@ -316,87 +367,151 @@ bool ObjReader::loadObject(const std::string &fileName, Objects *objs)
     file.seekg (0, file.beg);
     std::vector<char> data;
     data.resize(size);
-    file.read(data.data(), size);
+    file.read(&data[0], size);
     file.close();
 
-    std::vector<int> list;
-    //ListString ls;
+    return loadFromBuffer(data, objs);
+}
+
+bool ObjReader::loadObject(QIODevice *device, Objects *objs)
+{
+    std::vector<char> data;
+    data.resize(device->size());
+    device->read(&data[0], data.size());
+    return loadFromBuffer(data, objs);
+}
+
+string getSId(const ListPChar& pc)
+{
+    if(pc.size() < 2)
+        return string();
+    string s(pc[0], pc[1] - pc[0]);
+    return s;
+}
+
+bool ObjReader::loadFromBuffer(const std::vector<char> &data, Objects *objs)
+{
+    //std::vector<int> list;
+    QStringList list;
+#if 0
     auto fn = std::bind(&ObjReader::set_progress, this, std::placeholders::_1);
     vsplit(data, '\n', list, fn);
+#else
+    list = QString::fromLatin1(&data[0], data.size()).split('\n');
+    //vsplit(data, '\n', list, NULL);
+#endif
 
     Obj* obj;
-    float x, y, z;
     size_t id = 0;
-
-    vectorveci3 vi, vti, vni;
-
     unsigned vid = 0, vtid = 0, vnid = 0;
 
-    ListPChar pc;
+    QStringList pc;
+    //ListPChar pc;
     Vec3f v;
     Vec2f vt;
-    Vec3u idx1, idx2, idx3;
-    std::string name;
+    //Vec3u idx1, idx2, idx3;
+    QString name;
 
-    const std::string so = "o";
-    const std::string sv = "v";
-    const std::string svt = "vt";
-    const std::string svn = "vn";
-    const std::string sf = "f";
+    const QString so = "o";
+    const QString sv = "v";
+    const QString svt = "vt";
+    const QString svn = "vn";
+    const QString sf = "f";
 
-    objs->pos.reserve(1000000);
-    objs->tex.reserve(1000000);
-    objs->norm.reserve(1000000);
+    objs->pos.reserve(1000);
+    objs->tex.reserve(1000);
+    objs->norm.reserve(1000);
+
+//    string sid;
+    enum ID{EO = 1, EV, EVT, EVN, EF};
+    QHash<QString, int> ids;
+    ids[so] = EO;
+    ids[sv] = EV;
+    ids[svt] = EVT;
+    ids[svn] = EVN;
+    ids[sf] = EF;
+//    map<char, int> idc;
+//    idc[so[0]] = EO;
+//    idc[sv[0]] = EV;
+//    idc[svt[0]] = EVT;
+//    idc[svn[0]] = EVN;
+//    idc[sf[0]] = EF;
 
     for(size_t i = 0; i < list.size() - 1; ++i){
-        split(data.data() + list[i] + 1, data.data() + list[i + 1], ' ', pc);
-        if(!pc.empty()){
-            if(getResO(pc, so, name)){
-                obj = objs->getInstance();
-                if(obj){
-                    objs->push(obj);
+        QString& li = list[i];
+        char cid = li[0].toLatin1();
+        pc = li.split(' ');
+        //split(&data[0] + list[i] + 1, &data[0] + list[i + 1], ' ', pc);
+        if(cid != '#' && ids.contains(pc[0])){
+            //sid = getSId(pc);
+            //cout << sid.c_str() << endl;
+            //int eid = ids[sid];
+            int eid = ids[pc[0]];
+
+            //split(&data[0] + list[i] + 1, &data[0] + list[i + 1], ' ', pc);
+            switch (eid) {
+            case EO:
+                if(getResO(pc, name)){
+                    obj = objs->getInstance();
+                    if(obj){
+                        objs->push(obj);
+                    }
+                    obj->name = name;
+                    obj->posidx.reserve(1000);
+                    obj->texidx.reserve(1000);
+                    obj->normidx.reserve(1000);
                 }
-                obj->name = name;
-                obj->posidx.reserve(1000000);
-                obj->texidx.reserve(1000000);
-                obj->normidx.reserve(1000000);
-            }
-            if(getRes(pc, sv, v)){
+                break;
+            case EV:
+                getRes(pc, v);
                 objs->pos.push_back(v);
                 vid++;
-            }
-            if(getRes(pc, svt, vt)){
-                objs->tex.push_back(vt);
-                vtid++;
-            }
-            if(getRes(pc, svn, v)){
-                objs->norm.push_back(v);
-                vnid++;
-            }
-            if(getRes(pc, sf, obj->posidx, obj->texidx, obj->normidx)){
-//                idx1 -= 1;
-//                obj->posidx.push_back(idx1[0]); obj->posidx.push_back(idx1[1]); obj->posidx.push_back(idx1[2]);
+                break;
+            case EVT:
+                if(getRes(pc, vt)){
+                    objs->tex.push_back(vt);
+                    vtid++;
+                }
+                break;
+            case EVN:
+                if(getRes(pc, v)){
+                    objs->norm.push_back(v);
+                    vnid++;
+                }
+                break;
+            case EF:
+                getRes(pc, obj->posidx, obj->texidx, obj->normidx);
+    //                idx1 -= 1;
+    //                obj->posidx.push_back(idx1[0]); obj->posidx.push_back(idx1[1]); obj->posidx.push_back(idx1[2]);
 
-//                if(!idx2.isNull()){
-//                    idx2 -= 1;
-//                    obj->texidx.push_back(idx2[0]); obj->texidx.push_back(idx2[1]); obj->texidx.push_back(idx2[2]);
-//                }
-//                if(!idx3.isNull()){
-//                    idx3 -= 1;
-//                    obj->normidx.push_back(idx3[0]); obj->normidx.push_back(idx3[1]); obj->normidx.push_back(idx3[2]);
-//                }
+    //                if(!idx2.isNull()){
+    //                    idx2 -= 1;
+    //                    obj->texidx.push_back(idx2[0]); obj->texidx.push_back(idx2[1]); obj->texidx.push_back(idx2[2]);
+    //                }
+    //                if(!idx3.isNull()){
+    //                    idx3 -= 1;
+    //                    obj->normidx.push_back(idx3[0]); obj->normidx.push_back(idx3[1]); obj->normidx.push_back(idx3[2]);
+    //                }
+    //            }
+                break;
+            default:
+                break;
             }
         }
         if((id % 5000) == 0){
-            mProgress = 1. * id / list.size();
+            size_t list_size = list.size();
+            mProgress = 1. * id / list_size;
+#if _MSC_VER > 1600
             if(mCallProgress)  mCallProgress(mProgress);
-            std::cout << "2 progress " << 1. * id / list.size() << "          \r";
+#endif
+            std::cout << "2 progress " << 1. * id / list_size << "          \r\n";
         }
         id++;
     }
     return !objs->empty();
 }
 
+#if _MSC_VER > 1600
 void ObjReader::setCallProgress(ObjReader::call_progress fun)
 {
     mCallProgress = fun;
@@ -407,3 +522,4 @@ void ObjReader::set_progress(double v)
     mProgress = v;
     if(mCallProgress)  mCallProgress(mProgress);
 }
+#endif

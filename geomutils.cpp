@@ -24,6 +24,7 @@ void Obj::setType(uint32_t tp){
 /////////////////////////////////
 
 Objects::Objects()
+    : mId(0)
 {
 
 }

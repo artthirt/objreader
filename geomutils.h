@@ -5,8 +5,11 @@
 #include <memory>
 #include <iterator>
 #include <string>
+#include <inttypes.h>
 
-template< typename T, int Count = 3 >
+#include <QString>
+
+template< typename T, int Count >
 struct Vec_{
     T data[Count];
 
@@ -129,56 +132,56 @@ struct Vec_{
     }
 };
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator +(const Vec_<T, Count>& v1, const Vec_<T, Count>& v2){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] + v2.data[i];
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator -(const Vec_<T, Count>& v1, const Vec_<T, Count>& v2){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] - v2.data[i];
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator *(const Vec_<T, Count>& v1, const Vec_<T, Count>& v2){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] * v2.data[i];
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator /(const Vec_<T, Count>& v1, const Vec_<T, Count>& v2){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] / v2.data[i];
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator +(const Vec_<T, Count>& v1, T v){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] + v;
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator -(const Vec_<T, Count>& v1, T v){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] - v;
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator *(const Vec_<T, Count>& v1, T v){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] * v;
     return res;
 }
 
-template< typename T, int Count = 3 >
+template< typename T, int Count >
 Vec_<T, Count> operator /(const Vec_<T, Count>& v1, T v){
     Vec_<T, Count> res;
     for(int i = 0; i < Count; ++i)  res.data[i] = v1.data[i] / v;
@@ -202,34 +205,39 @@ class Objects;
 
 class Obj{
 public:
-    std::string name;
+    QString name;
     vectorvecu posidx;
     vectorvecu texidx;
     vectorvecu normidx;
 
-    Objects* parent = nullptr;
+    Objects* parent;
 
-    Obj(Objects* parent): parent(parent){}
+    Obj(Objects* parent): parent(parent), mType(0){}
     virtual bool empty() const;
     virtual void clear();
 
     uint32_t type() const;
     void setType(uint32_t tp);
 private:
-    uint32_t mType = 0;
+    uint32_t mType;
 };
 
+#if _MSC_VER <= 1600
+typedef std::tr1::shared_ptr<Obj> PObj;
+#define nullptr NULL
+#else
 typedef std::shared_ptr<Obj> PObj;
+#endif
 
 class Objects{
 public:
     struct Iterator{
         typedef Obj *PtrObj;
-        using iterator_category = std::forward_iterator_tag;
-        using diference_type = std::ptrdiff_t;
-        using value_type = PObj;
-        using pointer = PObj*;
-        using reference = PObj;
+        typedef std::forward_iterator_tag iterator_category;
+        typedef std::ptrdiff_t diference_type;
+        typedef PObj value_type;
+        typedef PObj* pointer;
+        typedef PObj reference;
 
         Iterator(pointer ptr): mPtr(ptr){}
 
@@ -265,7 +273,7 @@ public:
 
 protected:
     std::vector<PObj> mObjs;
-    size_t mId = 0;
+    size_t mId;
 };
 
 #endif // GEOMUTILS_H
