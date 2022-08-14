@@ -186,7 +186,7 @@ void WObjRender::paintGL()
 
 void WObjRender::mousePressEvent(QMouseEvent *event)
 {
-    QOpenGLWidget::mousePressEvent(event);
+    //QOpenGLWidget::mousePressEvent(event);
 
     if(event->buttons().testFlag(Qt::LeftButton)){
         mMouseDown = true;
@@ -207,7 +207,7 @@ void WObjRender::mousePressEvent(QMouseEvent *event)
 
 void WObjRender::mouseReleaseEvent(QMouseEvent *event)
 {
-    QOpenGLWidget::mouseReleaseEvent(event);
+    //QOpenGLWidget::mouseReleaseEvent(event);
     mMouseDown = false;
     mMouse = Vec2f(event->pos().x(), event->pos().y());
 
@@ -222,7 +222,7 @@ void WObjRender::mouseReleaseEvent(QMouseEvent *event)
 
 void WObjRender::mouseMoveEvent(QMouseEvent *event)
 {
-    QOpenGLWidget::mouseMoveEvent(event);
+    //QOpenGLWidget::mouseMoveEvent(event);
     if(mMouseDown){
         Vec2f mouse(event->pos().x(), event->pos().y());
         Vec2f dlt = mouse - mMouse;
